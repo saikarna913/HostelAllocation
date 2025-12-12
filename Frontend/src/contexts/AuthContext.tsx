@@ -1,115 +1,100 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export interface User {
   id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-  role: 'admin' | 'staff';
+  username: string;
+  role: 'admin' | 'staff' | 'user';
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void> | void;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user for development
-const MOCK_USER: User = {
-  id: 'u1',
-  email: 'warden@university.edu',
-  name: 'Admin Warden',
-  avatar: undefined,
-  role: 'admin',
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
+  // ------------------------
+  // Fetch current user on mount
+  // ------------------------
   useEffect(() => {
-    // Check for existing session in localStorage
-    const storedUser = localStorage.getItem('hostel_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const fetchUser = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          setUser(null);
+          return;
+        }
+        const data = await res.json();
+        setUser(data.user || data); // adapt depending on backend response
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  // ------------------------
+  // Login
+  // ------------------------
+  const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const form = new URLSearchParams();
-      form.append('username', email);
-      form.append('password', password);
-
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include', // important for httpOnly cookie
       });
-
-      if (!res.ok) {
-        throw new Error('Login failed');
-      }
 
       const data = await res.json();
-      const accessToken = data.access_token;
-      localStorage.setItem('hostel_access_token', accessToken);
+      if (!res.ok) throw new Error(data.message || 'Login failed');
 
-      // fetch user info
-      const me = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      // fetch user info after login
+      const meRes = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        credentials: 'include',
       });
-      const meData = await me.json();
-      const authUser: User = {
-        id: meData.id,
-        email: meData.email,
-        name: meData.name,
-        avatar: meData.avatar,
-        role: meData.role as 'admin' | 'staff',
-      };
-      setUser(authUser);
-      localStorage.setItem('hostel_user', JSON.stringify(authUser));
+      if (!meRes.ok) throw new Error('Failed to fetch user info');
+      const meData = await meRes.json();
+      setUser(meData.user || meData);
+
+      navigate('/', { replace: true });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loginWithGoogle = async () => {
-    setIsLoading(true);
-    try {
-      // Mock Google OAuth - in production, this would redirect to:
-      // GET /api/auth/google -> Google OAuth -> /api/auth/google/callback
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const googleUser: User = {
-        ...MOCK_USER,
-        name: 'Google User',
-        email: 'user@gmail.com',
-      };
-      setUser(googleUser);
-      localStorage.setItem('hostel_user', JSON.stringify(googleUser));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // ------------------------
+  // Logout
+  // ------------------------
   const logout = async () => {
     try {
-      const token = localStorage.getItem('hostel_access_token');
-      await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-    } catch (e) {
-      console.warn('Logout request failed', e);
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.warn('Logout failed', err);
+    } finally {
+      setUser(null);
+      navigate('/login', { replace: true });
     }
-    setUser(null);
-    localStorage.removeItem('hostel_user');
-    localStorage.removeItem('hostel_access_token');
   };
 
   return (
@@ -119,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
-        loginWithGoogle,
         logout,
       }}
     >
@@ -128,10 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// ------------------------
+// Hook to use auth
+// ------------------------
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
