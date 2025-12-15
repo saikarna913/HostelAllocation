@@ -1,137 +1,132 @@
-import { Building2, ChevronLeft, ChevronRight, Home, Settings, Users, BarChart3 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Hostel } from '@/types/hostel';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Home, Users, Building2, Settings, Menu, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { HostelMeta } from "@/types/hostel";
 
 interface SidebarProps {
-  hostels: Hostel[];
-  selectedHostel: string | null;
-  onSelectHostel: (hostelId: string) => void;
-  collapsed: boolean;
-  onToggleCollapse: () => void;
+  hostels: HostelMeta[];
 }
 
-export function Sidebar({
-  hostels,
-  selectedHostel,
-  onSelectHostel,
-  collapsed,
-  onToggleCollapse,
-}: SidebarProps) {
+export function Sidebar({ hostels }: SidebarProps) {
   const navigate = useNavigate();
-  const NavItem = ({
-    icon: Icon,
-    label,
-    active,
-    onClick,
-    badge,
-  }: {
-    icon: React.ElementType;
-    label: string;
-    active?: boolean;
-    onClick?: () => void;
-    badge?: string;
-  }) => {
-    const content = (
-      <button
-        onClick={onClick}
-        className={cn(
-          'sidebar-item w-full',
-          active && 'sidebar-item-active'
-        )}
-      >
-        <Icon className="h-5 w-5 flex-shrink-0" />
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-left truncate">{label}</span>
-            {badge && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-sidebar-accent text-sidebar-foreground/70">
-                {badge}
-              </span>
-            )}
-          </>
-        )}
-      </button>
-    );
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-    if (collapsed) {
-      return (
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="flex items-center gap-2">
-            {label}
-            {badge && <span className="text-muted-foreground">({badge})</span>}
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return content;
-  };
+  const navItems = [
+    { icon: Home, label: "Dashboard", path: "/" },
+    { icon: Users, label: "Students", path: "/students" },
+  ];
 
   return (
-    <aside
-      className={cn(
-        'h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 ease-in-out border-r border-sidebar-border',
-        collapsed ? 'w-[72px]' : 'w-[260px]'
-      )}
-    >
-      {/* Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-sidebar-primary" />
-            <span className="font-semibold text-lg">HostelMS</span>
-          </div>
-        )}
-        {collapsed && <Building2 className="h-6 w-6 text-sidebar-primary mx-auto" />}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      </div>
+    <>
+      {/* Mobile toggle button */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className="md:hidden fixed top-4 left-4 z-50"
+        onClick={() => setMobileOpen(!mobileOpen)}
+      >
+        {mobileOpen ? <X /> : <Menu />}
+      </Button>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 py-4">
-        <div className="px-3 space-y-1">
-          <NavItem icon={Home} label="Dashboard" onClick={() => navigate('/')} />
-          <NavItem icon={BarChart3} label="Analytics" />
-          <NavItem icon={Users} label="Students" onClick={() => navigate('/students')} />
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "w-64 h-screen border-r bg-card fixed md:static transform transition-transform md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Header */}
+        <div className="h-16 flex items-center px-4 border-b">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            <span className="font-semibold">HostelMS</span>
+          </div>
         </div>
 
+        {/* Main Navigation */}
+        <nav className="p-3 space-y-1">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                navigate(item.path);
+                setMobileOpen(false);
+              }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+                location.pathname === item.path
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
         {/* Hostels Section */}
-        <div className="mt-6 px-3">
-          {!collapsed && (
-            <h3 className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 px-3">
-              Hostels
-            </h3>
-          )}
+        <div className="mt-6 p-3 border-t">
+          <h4 className="text-xs uppercase text-muted-foreground mb-2 px-3">
+            Hostels
+          </h4>
           <div className="space-y-1">
             {hostels.map((hostel) => (
-              <NavItem
+              <button
                 key={hostel.id}
-                icon={Building2}
-                label={hostel.name}
-                active={selectedHostel === hostel.id}
-                onClick={() => onSelectHostel(hostel.id)}
-                badge={hostel.type === 'boys' ? 'B' : 'G'}
-              />
+                onClick={() => {
+                  navigate(`/hostels/${hostel.id}`);
+                  setMobileOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+                  location.pathname === `/hostels/${hostel.id}`
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                )}
+              >
+                <Building2 className="h-4 w-4" />
+                <span>{hostel.name}</span>
+                {hostel.type && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {hostel.type}
+                  </span>
+                )}
+              </button>
             ))}
           </div>
         </div>
-      </ScrollArea>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border">
-        <NavItem icon={Settings} label="Settings" onClick={() => navigate('/settings')} />
-      </div>
-    </aside>
+        {/* Settings at bottom */}
+        <div className="mt-auto p-3 border-t">
+          <button
+            onClick={() => {
+              navigate("/settings");
+              setMobileOpen(false);
+            }}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm",
+              location.pathname === "/settings"
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-accent"
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+    </>
   );
 }
