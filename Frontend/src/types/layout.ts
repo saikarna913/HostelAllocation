@@ -1,12 +1,17 @@
 export type LayoutNodeType = 'room' | 'pantry' | 'label';
 
-export interface LayoutNode {
-  id: string;                 // roomId like "H0-121" OR "pantry-1"
+export interface AbsoluteLayoutNode {
+  id: string;
   type: LayoutNodeType;
   x: number;
   y: number;
   width: number;
   height: number;
+
+  /** optional rotation in degrees */
+  rotation?: number;
+
+  /** for pantry / label */
   label?: string;
 }
 
@@ -15,5 +20,5 @@ export interface AbsoluteFloorLayout {
     width: number;
     height: number;
   };
-  nodes: LayoutNode[];
+  nodes: AbsoluteLayoutNode[];
 }
