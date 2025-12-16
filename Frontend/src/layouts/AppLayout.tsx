@@ -2,18 +2,16 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
-import { hostels } from "./hostelLayouts";
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen">
-      <Sidebar
-        hostels={hostels}
+      <Sidebar/>
+        {/*//hostels={hostels}
         //collapsed={sidebarCollapsed}
-        //onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-      />
+        //onToggleCollapse={() => setSidebarCollapsed((v) => !v)}*/}
 
       <div className="flex-1 flex flex-col">
         <Header />

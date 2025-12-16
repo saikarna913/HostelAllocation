@@ -1,22 +1,44 @@
 import { useParams } from 'react-router-dom';
-import { useState } from 'react';
-import { useFloorData } from '@/hooks/useFloorData';
+import { useMemo } from 'react';
+import { hostelLayouts } from '@/layouts';
+import { useFloorState } from '@/hooks/useFloorData';
+import { mergeLayoutWithState } from '@/utils/mergeLayoutWithState';
 import { FloorMap } from '@/components/hostel/FloorMap';
-import { RoomDetailsPanel } from '@/components/hostel/RoomDetailsPanel';
-import { Room } from '@/types/hostel';
 
 export default function FloorView() {
-  const { hostelId } = useParams();
-  const [room, setRoom] = useState<Room | null>(null);
+  const { hostelId, floor } = useParams();
 
-  const { data } = useFloorData(hostelId!, 1);
+  if (!hostelId) {
+    return <div>Invalid hostel</div>;
+  }
 
-  if (!data) return <div>Loading...</div>;
+  const floorNumber = Number(floor ?? 0);
+console.log({
+  hostelId,
+  floor,
+  floorNumber,
+  availableHostels: Object.keys(hostelLayouts),
+  availableFloors: hostelLayouts[hostelId],
+});
+  const layout =
+    hostelLayouts[hostelId]?.[floorNumber];
+
+  if (!layout) {
+    return <div>No layout for this floor</div>;
+  }
+
+  const { data: state } = useFloorState(hostelId, floorNumber);
+
+  const nodes = useMemo(
+    () => mergeLayoutWithState(layout, state ?? []),
+    [layout, state]
+  );
 
   return (
-    <>
-      <FloorMap floor={data} onRoomClick={setRoom} />
-      {room && <RoomDetailsPanel room={room} onClose={() => setRoom(null)} />}
-    </>
+    <FloorMap
+      width={layout.frame.width}
+      height={layout.frame.height}
+      nodes={nodes}
+    />
   );
 }

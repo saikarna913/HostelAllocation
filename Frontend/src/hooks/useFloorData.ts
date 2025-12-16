@@ -1,17 +1,13 @@
+// useFloorData.ts
 import { useQuery } from '@tanstack/react-query';
-import { hostelLayouts } from '@/layouts/hostelLayouts';
 import { fetchFloorState } from '@/api/floorState';
-import { mergeLayoutWithState } from '@/utils/mergeLayoutWithState';
+import { RoomState } from '@/types/hostel';
 
-export function useFloorData(hostelId: string, floor: number) {
-  const layout = hostelLayouts[hostelId]?.floors[floor];
-
-  return useQuery({
-    queryKey: ['floor', hostelId, floor],
-    queryFn: async () => {
-      const state = await fetchFloorState(hostelId, floor);
-      return mergeLayoutWithState(layout, state);
-    },
-    enabled: !!layout,
+export function useFloorState(hostelId: string, floor: number) {
+  return useQuery<RoomState[]>({
+    queryKey: ['floor-state', hostelId, floor],
+    queryFn: () => fetchFloorState(hostelId, floor),
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 }

@@ -20,13 +20,20 @@ export default function App() {
 
             <Route
               element={
-                <ProtectedRoute>
+                /* The ProtectedRoute component has been commented out to allow
+                   unauthenticated access to the nested routes below. 
+                */
+                // {/*<ProtectedRoute>*/} 
                   <AppLayout />
-                </ProtectedRoute>
+                // {/*</ProtectedRoute>*/} 
               }
             >
               <Route path="/" element={<Index />} />
               <Route path="/hostels/:hostelId" element={<FloorView />} />
+               <Route
+                path="/hostels/:hostelId/floor/:floor"
+                element={<FloorView />}
+              />
             </Route>
           </Routes>
         </AuthProvider>

@@ -1,36 +1,34 @@
-import { FloorLayout, Room, RoomState } from '@/types/hostel';
+// utils/mergeLayoutWithState.ts
+import { AbsoluteFloorLayout } from '@/types/layout';
+import { RoomState, Room } from '@/types/hostel';
 
-export interface FloorWithRooms extends Omit<FloorLayout, 'wings'> {
-  wings: {
-    name: string;
-    rows: {
-      index: number;
-      rooms: Room[];
-    }[];
-  }[];
+export interface RenderNode {
+  layout: AbsoluteFloorLayout['nodes'][0];
+  room?: Room;
 }
 
 export function mergeLayoutWithState(
-  layout: FloorLayout,
+  layout: AbsoluteFloorLayout,
   state: RoomState[]
-): FloorWithRooms {
+): RenderNode[] {
   const map = new Map(state.map(s => [s.roomId, s]));
 
-  return {
-    ...layout,
-    wings: layout.wings.map(w => ({
-      ...w,
-      rows: w.rows.map(r => ({
-        ...r,
-        rooms: r.rooms.map(room => {
-          const s = map.get(room.id);
-          return {
-            ...room,
-            status: s?.status ?? 'vacant',
-            occupants: s?.occupants ?? [],
-          };
-        }),
-      })),
-    })),
-  };
+  return layout.nodes.map(node => {
+    if (node.type !== 'room') {
+      return { layout: node };
+    }
+
+    const s = map.get(node.id);
+
+    return {
+      layout: node,
+      room: {
+        id: node.id,
+        label: node.id,
+        capacity: 2, // default, can be overridden later
+        status: s?.status ?? 'vacant',
+        occupants: s?.occupants ?? [],
+      },
+    };
+  });
 }

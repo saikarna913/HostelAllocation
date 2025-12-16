@@ -2,10 +2,13 @@ import { Building2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { hostels } from '@/layouts/hostelLayouts';
+import { hostelMetaMap } from '@/layouts';
 
 export function WelcomeCard() {
   const navigate = useNavigate();
+
+  const hostels = Object.values(hostelMetaMap);
+  const firstHostel = hostels[0];
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -16,9 +19,17 @@ export function WelcomeCard() {
           <p className="text-muted-foreground mb-6">
             Select a hostel to view rooms and manage allocations.
           </p>
-          <Button onClick={() => navigate(`/hostels/${hostels[0].id}`)}>
-            Select Hostel <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+
+          {firstHostel && (
+            <Button
+              onClick={() =>
+                navigate(`/hostels/${firstHostel.id}/floor/0`)
+              }
+            >
+              Select {firstHostel.name}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

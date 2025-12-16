@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export interface User {
+  name: string;
   id: string;
   username: string;
   role: 'admin' | 'staff' | 'user';

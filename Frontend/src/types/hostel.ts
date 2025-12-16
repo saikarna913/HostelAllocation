@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export interface HostelMeta {
   id: string;
   name: string;
@@ -34,6 +36,7 @@ export interface HostelLayout {
 export type RoomStatus = 'vacant' | 'occupied' | 'reserved';
 
 export interface Occupant {
+  course: ReactNode;
   studentId: string;
   name: string;
   branch: string;

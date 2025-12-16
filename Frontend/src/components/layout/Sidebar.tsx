@@ -3,13 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { HostelMeta } from "@/types/hostel";
+import { hostelMetaMap } from "@/layouts";
 
-interface SidebarProps {
-  hostels: HostelMeta[];
-}
-
-export function Sidebar({ hostels }: SidebarProps) {
+export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -19,9 +15,11 @@ export function Sidebar({ hostels }: SidebarProps) {
     { icon: Users, label: "Students", path: "/students" },
   ];
 
+  const hostels = Object.values(hostelMetaMap);
+
   return (
     <>
-      {/* Mobile toggle button */}
+      {/* Mobile toggle */}
       <Button
         size="icon"
         variant="ghost"
@@ -31,7 +29,6 @@ export function Sidebar({ hostels }: SidebarProps) {
         {mobileOpen ? <X /> : <Menu />}
       </Button>
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "w-64 h-screen border-r bg-card fixed md:static transform transition-transform md:translate-x-0",
@@ -46,9 +43,9 @@ export function Sidebar({ hostels }: SidebarProps) {
           </div>
         </div>
 
-        {/* Main Navigation */}
+        {/* Main Nav */}
         <nav className="p-3 space-y-1">
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <button
               key={item.label}
               onClick={() => {
@@ -68,39 +65,38 @@ export function Sidebar({ hostels }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Hostels Section */}
+        {/* Hostels */}
         <div className="mt-6 p-3 border-t">
           <h4 className="text-xs uppercase text-muted-foreground mb-2 px-3">
             Hostels
           </h4>
+
           <div className="space-y-1">
-            {hostels.map((hostel) => (
+            {hostels.map(hostel => (
               <button
                 key={hostel.id}
                 onClick={() => {
-                  navigate(`/hostels/${hostel.id}`);
+                  navigate(`/hostels/${hostel.id}/floor/0`);
                   setMobileOpen(false);
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm",
-                  location.pathname === `/hostels/${hostel.id}`
+                  location.pathname.startsWith(`/hostels/${hostel.id}`)
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-accent"
                 )}
               >
                 <Building2 className="h-4 w-4" />
                 <span>{hostel.name}</span>
-                {hostel.type && (
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {hostel.type}
-                  </span>
-                )}
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {hostel.type}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Settings at bottom */}
+        {/* Settings */}
         <div className="mt-auto p-3 border-t">
           <button
             onClick={() => {
@@ -120,7 +116,6 @@ export function Sidebar({ hostels }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 md:hidden z-40"

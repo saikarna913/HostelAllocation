@@ -1,34 +1,59 @@
-import { FloorWithRooms } from '@/utils/mergeLayoutWithState';
-import { Room } from '@/types/hostel';
+import { RenderNode } from '@/utils/mergeLayoutWithState';
 import { RoomCell } from './RoomCell';
 
 interface Props {
-  floor: FloorWithRooms;
-  onRoomClick?: (room: Room) => void;
+  width: number;
+  height: number;
+  nodes: RenderNode[];
+  onRoomClick?: (roomId: string) => void;
 }
 
-export function FloorMap({ floor, onRoomClick }: Props) {
+export function FloorMap({ width, height, nodes, onRoomClick }: Props) {
   return (
-    <div className="space-y-8">
-      {floor.wings.map(wing => (
-        <div key={wing.name}>
-          <h3 className="font-semibold mb-2">Wing {wing.name}</h3>
+    <div
+      className="relative border bg-background"
+      style={{ width, height }}
+    >
+      {nodes.map(node => {
+        const { layout } = node;
 
-          <div className="space-y-2">
-            {wing.rows.map(row => (
-              <div key={row.index} className="flex gap-2">
-                {row.rooms.map(room => (
-                  <RoomCell
-                    key={room.id}
-                    room={room}
-                    onClick={() => onRoomClick?.(room)}
-                  />
-                ))}
-              </div>
-            ))}
+        // ---- ROOM ----
+        if (layout.type === 'room' && node.room) {
+          return (
+            <div
+              key={layout.id}
+              style={{
+                position: 'absolute',
+                left: layout.x,
+                top: layout.y,
+                width: layout.width,
+                height: layout.height,
+              }}
+            >
+              <RoomCell
+                room={node.room}
+                onClick={() => onRoomClick?.(node.room!.id)}
+              />
+            </div>
+          );
+        }
+
+        // ---- PANTRY / LABEL ----
+        return (
+          <div
+            key={layout.id}
+            className="absolute flex items-center justify-center rounded bg-muted text-xs font-medium"
+            style={{
+              left: layout.x,
+              top: layout.y,
+              width: layout.width,
+              height: layout.height,
+            }}
+          >
+            {layout.label}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
