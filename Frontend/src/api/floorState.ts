@@ -5,7 +5,7 @@ export async function fetchFloorState(
   floor: number
 ): Promise<RoomState[]> {
   const res = await fetch(
-    `${BACKEND_URL}/api/hostels/${hostelId}/floors/${floor}`,
+    `${BACKEND_URL}/api/db/hostels/${hostelId}/floors/${floor}`,
     { credentials: 'include' }
   );
 
